@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+            android:key="notify_charge"
+            android:defaultValue="true"
+            android:title="Show Charging Notification"
+            android:summary="Show notification when charging state changes"/>
+
+    <CheckBoxPreference
+            android:key="notify_dock"
+            android:defaultValue="true"
+            android:title="Show Dock Notification"
+            android:summary="Show notification when dock state changes"/>
+
+    <CheckBoxPreference
+            android:key="change_ime_charge"
+            android:defaultValue="true"
+            android:title="Change Keyboard on Charge"
+            android:summary="Show input method (keyboard) picker when charging state changes"/>
+    <CheckBoxPreference
+            android:key="change_ime_dock"
+            android:defaultValue="true"
+            android:title="Change Keyboard on Dock"
+            android:summary="Show input method (keyboard) picker when dock state changes"/>
+
+</PreferenceScreen>

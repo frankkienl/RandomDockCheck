@@ -2,12 +2,9 @@ package nl.frankkie.randomdockcheck;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.*;
 import android.os.BatteryManager;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.view.inputmethod.InputMethodManager;
 
@@ -18,12 +15,20 @@ public class DockStateReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (MainActivity.thisAct != null) {
-            MainActivity.thisAct.refreshDockState();
+            MainActivity.thisAct.refreshUI();
         }
 
-        ////
-        ((InputMethodManager) context.getSystemService("input_method")).showInputMethodPicker();
-        ////
+        //Settings
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        if (intent.getAction().equals(Intent.ACTION_DOCK_EVENT)) {
+            if (preferences.getBoolean("change_ime_dock", true)) {
+                ((InputMethodManager) context.getSystemService("input_method")).showInputMethodPicker();
+            }
+        } else {
+            if (preferences.getBoolean("change_ime_charge", true)) {
+                ((InputMethodManager) context.getSystemService("input_method")).showInputMethodPicker();
+            }
+        }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
         builder.setSmallIcon(R.drawable.ic_launcher);
@@ -51,7 +56,11 @@ public class DockStateReceiver extends BroadcastReceiver {
         NotificationManager mNotificationManager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         // mId allows you to update the notification later on.
-        mNotificationManager.notify(1, builder.build());
+
+        if ((intent.getAction().equals(Intent.ACTION_DOCK_EVENT) && preferences.getBoolean("notify_dock", true))
+                || (!intent.getAction().equals(Intent.ACTION_DOCK_EVENT) && preferences.getBoolean("notify_charge", true))) {
+            mNotificationManager.notify(1, builder.build());
+        }
     }
 
     protected String getDockState(Context context, Intent intent) {

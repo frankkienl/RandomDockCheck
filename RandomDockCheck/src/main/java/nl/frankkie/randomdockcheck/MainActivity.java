@@ -3,36 +3,55 @@ package nl.frankkie.randomdockcheck;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
-import android.widget.TextView;
-
+import android.view.MenuItem;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.*;
 import org.apache.http.conn.util.InetAddressUtils;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
+
 
 public class MainActivity extends Activity {
 
-    TextView tv;
-    TextView ipTv;
     public static MainActivity thisAct;
+    //Views
+    Button btnChangeIme;
+    TableLayout tableLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        tv = (TextView) findViewById(R.id.main_tv);
-        ipTv = (TextView) findViewById(R.id.main_iptv);
-        refreshDockState();
         thisAct = this;
+        initUI();
+        refreshUI();
     }
 
-    protected void refreshDockState() {
+    protected void initUI() {
+        setContentView(R.layout.activity_main_advanced);
+        btnChangeIme = (Button) findViewById(R.id.main_btn_change_ime);
+        btnChangeIme.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                InputMethodManager inputService = (InputMethodManager) thisAct.getSystemService(INPUT_METHOD_SERVICE);
+                inputService.showInputMethodPicker();
+            }
+        });
+        tableLayout = (TableLayout) findViewById(R.id.main_table);
+    }
+
+    protected void refreshUI() {
+        tableLayout.removeAllViews();
+        LayoutInflater layoutInflater = getLayoutInflater();
+        //Dock
         IntentFilter intentFilter = new IntentFilter(Intent.ACTION_DOCK_EVENT);
         Intent dockStatus = registerReceiver(null, intentFilter);
         int dockState = dockStatus.getIntExtra(Intent.EXTRA_DOCK_STATE, -1);
@@ -41,39 +60,37 @@ public class MainActivity extends Activity {
         boolean isDesk = dockState == Intent.EXTRA_DOCK_STATE_DESK ||
                 dockState == Intent.EXTRA_DOCK_STATE_LE_DESK ||
                 dockState == Intent.EXTRA_DOCK_STATE_HE_DESK;
-        StringBuilder sb = new StringBuilder();
-        sb.append("Dock State:\nis docked: ").append(isDocked).append("\nis car: ").append(isCar).append("\nis desk:").append(isDesk);
-        tv.setText(sb.toString());
-        tv.invalidate();
-
-        String ip = getIPAddress(true);
-        ipTv.setText("IP: " + ip);
+        //Dock
+        makeRow(layoutInflater, isDocked, R.string.docked);
+        makeRow(layoutInflater, isCar, R.string.car);
+        makeRow(layoutInflater, isDesk, R.string.desk);
+        //IP
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        //
+        TableRow row = (TableRow) layoutInflater.inflate(R.layout.inflate_layout, null);
+        TextView tv = (TextView) row.findViewById(R.id.inflate_tv);
+        tv.setText(getString(R.string.ip_address) + ": " + getIPAddress(true));
+        ImageView img = (ImageView) row.findViewById(R.id.inflate_img);
+        img.setImageResource((mWifi.isConnected()) ? R.drawable.device_access_network_wifi : R.drawable.device_access_network_cell);
+        tableLayout.addView(row);
     }
 
-    protected String getIp() {
-        try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress()) {
-                        //inetAddress.
-                        return inetAddress.getHostAddress().toString();
-                    }
-                }
-            }
-        } catch (Exception ex) {
-            Log.e("IP Address", ex.toString());
-        }
-        return null;
+    protected void makeRow(LayoutInflater layoutInflater, boolean isOk, int stringResource) {
+        TableRow row = (TableRow) layoutInflater.inflate(R.layout.inflate_layout, null);
+        TextView tv = (TextView) row.findViewById(R.id.inflate_tv);
+        tv.setText(getString(stringResource));
+        ImageView img = (ImageView) row.findViewById(R.id.inflate_img);
+        img.setImageResource((isOk) ? R.drawable.navigation_accept : R.drawable.navigation_cancel);
+        tableLayout.addView(row);
     }
-
 
     /**
      * Get IP address from first non-localhost interface
      *
      * @param useIPv4 true=return ipv4, false=return ipv6
      * @return address or empty string
+     *         src: http://stackoverflow.com/questions/6064510/how-to-get-ip-address-of-the-device
      */
     public static String getIPAddress(boolean useIPv4) {
         try {
@@ -106,6 +123,15 @@ public class MainActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+        menu.findItem(R.id.action_settings).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                Intent i = new Intent();
+                i.setClass(thisAct, SettingsActivity.class);
+                startActivity(i);
+                return true;
+            }
+        });
         return true;
     }
 
