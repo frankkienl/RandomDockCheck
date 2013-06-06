@@ -1,7 +1,7 @@
 Simple application to check if your phone is docked or not.
 Only tested on the Samsung Galaxy S3 with the official Samsung Desk Dock.
 
-![Screenshot - Docked](Screenshot1.png "Docked")
-![Screenshot - Not Docked](Screenshot2.png "Not Docked")
+![Screenshot - Docked](/main/Screenshot1.png "Docked")
+![Screenshot - Not Docked](/main/Screenshot2.png "Not Docked")
 
 This file was created by Android Studio (I/O Preview) AI-130.692269 for binding GitHub repository
